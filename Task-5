@@ -1,0 +1,139 @@
+python
+import speech_recognition as sr
+import pyttsx3
+import os
+import datetime
+import webbrowser
+import wikipedia
+import random
+import pyjokes
+import smtplib
+from email.message import EmailMessage
+
+# Initialize the speech recognition engine
+r = sr.Recognizer()
+
+# Initialize the text-to-speech engine
+engine = pyttsx3.init()
+
+# Set the voice and rate of the text-to-speech engine
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
+engine.setProperty('rate', 150)
+
+# Define a function to speak text
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+# Define a function to get user input through voice
+def get_voice_input():
+    with sr.Microphone() as source:
+        print("Listening...")
+        audio = r.listen(source)
+        try:
+            text = r.recognize_google(audio, language='en-in')
+            print("You said: " + text)
+            return text
+        except sr.UnknownValueError:
+            print("Sorry, I didn't understand")
+            return None
+
+# Define a function to send an email
+def send_email(to, subject, message):
+    msg = EmailMessage()
+    msg.set_content(message)
+    msg['subject'] = subject
+    msg['to'] = to
+    msg['from'] = 'your_email@gmail.com'
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server.login('your_email@gmail.com', 'your_password')
+    server.send_message(msg)
+    server.quit()
+
+# Define a function to get the current date and time
+def get_current_datetime():
+    now = datetime.datetime.now()
+    return now.strftime("%Y-%m-%d %H:%M:%S")
+
+# Define a function to get the weather
+def get_weather(city):
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid=your_api_key"
+    response = requests.get(url)
+    data = response.json()
+    weather = data['weather'][0]['description']
+    return weather
+
+# Define a function to play music
+def play_music():
+    music_dir = 'path_to_music_directory'
+    songs = os.listdir(music_dir)
+    song = random.choice(songs)
+    os.startfile(os.path.join(music_dir, song))
+
+# Define a function to tell a joke
+def tell_joke():
+    joke = pyjokes.get_joke()
+    speak(joke)
+
+# Define a function to search Wikipedia
+def search_wikipedia(query):
+    results = wikipedia.search(query)
+    if results:
+        speak("Here's what I found on Wikipedia:")
+        speak(wikipedia.summary(query, sentences=2))
+    else:
+        speak("Sorry, I couldn't find anything on Wikipedia")
+
+# Define a function to open a website
+def open_website(url):
+    webbrowser.open(url)
+
+# Define a function to create a reminder
+def create_reminder(message, time):
+    print("Reminder set for " + time + ": " + message)
+
+# Define a function to get the user's preferences
+def get_preferences():
+    preferences = {}
+    speak("What would you like to do today?")
+    text = get_voice_input()
+    if text:
+        if "email" in text:
+            speak("Who would you like to send an email to?")
+            to = get_voice_input()
+            speak("What is the subject of the email?")
+            subject = get_voice_input()
+            speak("What is the message of the email?")
+            message = get_voice_input()
+            preferences['email'] = {'to': to, 'subject': subject, 'message': message}
+        elif "weather" in text:
+            speak("What city would you like to know the weather of?")
+            city = get_voice_input()
+            preferences['weather'] = city
+        elif "music" in text:
+            preferences['music'] = True
+        elif "joke" in text:
+            preferences['joke'] = True
+        elif "Wikipedia" in text:
+            speak("What would you like to search on Wikipedia?")
+            query = get_voice_input()
+            preferences['wikipedia'] = query
+        elif "website" in text:
+            speak("What website would you like to open?")
+            url = get_voice_input()
+            preferences['website'] = url
+        elif "reminder" in text:
+            speak("What would you like to be reminded of?")
+            message = get_voice_input()
+            speak("When would you like to be reminded?")
+            time = get_voice_input()
+            preferences['reminder'] = {'message': message, 'time': time}
+    return preferences
+
+# Main loop
+while True:
+    preferences = get_preferences()
+    if preferences:
+        if 'email' in preferences:
+            send_email(preferences['email']['to'], preferences['
